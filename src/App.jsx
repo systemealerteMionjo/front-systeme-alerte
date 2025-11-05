@@ -44,7 +44,7 @@ const FileDownloadButton = memo(({ fileUrl }) => {
 });
 
 // ------------------ Upload Supabase ------------------
-const FileUploadButton = memo(({ rowId, onUpload }) => {
+const FileUploadButton = memo(({ rowId, rowData, onUpload }) => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
@@ -61,6 +61,28 @@ const FileUploadButton = memo(({ rowId, onUpload }) => {
     if (!file) {
       toast.error("Veuillez sélectionner un fichier");
       return;
+    }
+
+    // ⛔ supprime l'ancien fichier si existe
+    if (rowData?.fichierUrl) {
+      try {
+        const oldUrl = rowData.fichierUrl;
+        const filePath = oldUrl.split("/").pop(); // récupère le nom du fichier
+        console.log("Suppression du fichier existant:", filePath);
+
+        const { error: deleteError } = await supabase.storage
+          .from("mionjo_files")
+          .remove([filePath]);
+
+        if (deleteError) {
+          console.error("Erreur suppression ancienne pièce:", deleteError);
+          toast.error("Impossible de supprimer l'ancien fichier");
+        } else {
+          console.log("Ancien fichier supprimé ✅");
+        }
+      } catch (err) {
+        console.error("Erreur lors de l'extraction/suppression:", err);
+      }
     }
 
     // Validation de la taille du fichier (100MB max)
@@ -379,7 +401,7 @@ function App() {
       field: 'upload', 
       headerName: '', 
       flex: 0.5, 
-      renderCell: (params) => <FileUploadButton rowId={params.row.id} onUpload={fetchData} /> 
+      renderCell: (params) => <FileUploadButton rowId={params.row.id} rowData={params.row} onUpload={fetchData} /> 
     }
   ], [fetchData]);
 
