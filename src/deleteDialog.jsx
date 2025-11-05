@@ -347,7 +347,7 @@ export default function DeleteDialog({ refreshRows, rowData }) {
       // Message de succès approprié
       if (rowData?.fichierUrl) {
         if (fileResult.success && fileResult.exists) {
-          toast.success("✅ Suppression complète réussie (DB + Fichier)");
+          toast.success("✅ Suppression complète réussie");
         } else if (fileResult.success && !fileResult.exists) {
           toast.success("✅ DB supprimée (ℹ️ fichier déjà absent)");
         } else {
@@ -441,17 +441,6 @@ export default function DeleteDialog({ refreshRows, rowData }) {
             <strong>Activité:</strong> {rowData?.raison || 'Non spécifiée'}
           </DialogContentText>
           
-          {rowData?.fichierUrl && (
-            <DialogContentText 
-              variant="body2" 
-              color="text.secondary" 
-              sx={{ mt: 2, fontFamily: 'monospace' }}
-            >
-              📎 <strong>Fichier associé:</strong><br/>
-              {getDisplayFileName()}
-            </DialogContentText>
-          )}
-          
           <DialogContentText 
             variant="body2" 
             color="warning.main" 
@@ -459,18 +448,7 @@ export default function DeleteDialog({ refreshRows, rowData }) {
           >
             ⚠️ <strong>Attention:</strong> Cette action est irréversible et supprimera:
           </DialogContentText>
-          
-          <DialogContentText 
-            component="ul" 
-            variant="body2" 
-            color="text.secondary"
-            sx={{ mt: 1, pl: 2 }}
-          >
-            {rowData?.fichierUrl && (
-              <li>Le fichier du stockage Supabase</li>
-            )}
-            <li>L'enregistrement de la base de données</li>
-          </DialogContentText>
+        
         </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
@@ -487,7 +465,7 @@ export default function DeleteDialog({ refreshRows, rowData }) {
             disabled={loading}
             sx={STYLES.primaryButton}
           >
-            {loading ? "Suppression..." : "Confirmer la suppression"}
+            {loading ? "Suppression..." : "Confirmer"}
           </Button>
         </DialogActions>
       </Dialog>
