@@ -283,7 +283,7 @@ function App() {
           id: r.id_inf,
           raison: r.raison,
           mail: r.mail_resp,
-          datelimite: r.datelimite,
+          datelimite: dayjs(r.datelimite).format("DD-MM-YYYY HH:mm"),
           datelivraison: r.date_upload != null ? dayjs(r.date_upload).format("DD-MM-YYYY HH:mm") : '-',
           observation: r.observation || '-',
           statut: r.statut,
