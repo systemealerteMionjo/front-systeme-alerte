@@ -43,7 +43,6 @@ const STYLES = {
   }
 };
 
-// Utility functions
 const getUniqueResponsables = (rows) => {
   const uniqueResponsables = [];
   const seen = new Set();
@@ -54,7 +53,8 @@ const getUniqueResponsables = (rows) => {
       uniqueResponsables.push({
         id: r.id,
         nom: r.nom,
-        mail: r.mail || ''
+        mail: r.mail || '',
+        num: r.num,
       });
     }
   });
@@ -76,11 +76,10 @@ export default function AddActivityDialog({ refreshRows, row }) {
   const [loading, setLoading] = useState(false);
   const [selectedResponsable, setSelectedResponsable] = useState(null);
   const [email, setEmail] = useState('');
+  //const [num, setNum] = useState(null);
 
-  // Handlers
   const handleDateChange = (newValue) => {
     if (!newValue) return;
-    // Force minutes to 00
     const fixed = newValue.minute(0).second(0);
     setDateValue(fixed);
   };
@@ -113,19 +112,18 @@ export default function AddActivityDialog({ refreshRows, row }) {
     e.preventDefault();
     const form = e.target;
 
-    // Prepare form data
     const formData = {
       nom: typeof selectedResponsable === 'string'
         ? selectedResponsable
         : (selectedResponsable?.nom || form.nom.value),
       mail: email || form.mail.value,
+      //num: Number(form.num.value),
       raison: form.raison.value,
       observation: form.observation.value || '',
       datelimite: dateValue.format("YYYY-MM-DDTHH:mm"),
       statut: getStatusBasedOnDate(dateValue)
     };
 
-    // Validation
     if (!formData.nom || !formData.mail || !formData.raison) {
       toast.error("Veuillez remplir tous les champs obligatoires");
       return;
@@ -141,7 +139,6 @@ export default function AddActivityDialog({ refreshRows, row }) {
       console.log("✅ Réponse du backend :", response.data);
       toast.success("Activité ajoutée avec succès ✅");
       
-      // Refresh parent component
       if (refreshRows) {
         await refreshRows();
       }
@@ -227,6 +224,24 @@ export default function AddActivityDialog({ refreshRows, row }) {
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
             />
+
+            {/*<TextField
+              required
+              focused
+              margin="dense"
+              name="num"
+              label="Numéro de téléphone (*Whatsapp)"
+              type="text"
+              fullWidth
+              variant="outlined"
+              value={num}
+              onChange={(e) => {
+                setNum(e.target.value);
+                handleChange
+              }}
+              inputProps={{ inputMode: "tel", pattern: '[0-9]*'}}
+              autoComplete="num"
+            />*/}
 
             <TextField
               required

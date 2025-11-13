@@ -12,7 +12,6 @@ import EditActivityDialog from './EditDialog.jsx';
 import dayjs from 'dayjs';
 import DeleteDialog from './deleteDialog.jsx';
 import toast, { Toaster } from 'react-hot-toast';
-import { supabase } from './supabase';
 
 // ------------------ Components Memo ------------------
 const StatusChip = memo(({ label, color }) => <Chip label={label} color={color} size="small" />);
@@ -21,14 +20,18 @@ const API_BASE_URL = "https://fastapi-mionjoapi-alertemionjo1455-9k2qh0ff.leapce
 
 const FileDownloadButton = memo(({ fileUrl }) => {
   const handleDownload = useCallback(() => {
-    if (!fileUrl) return;
+    if (!fileUrl) {
+      toast.error("Aucun fichier disponible");
+      return;
+    }
 
     try {
-      window.open(fileUrl, '_blank');
-      toast.success("Ouverture du fichier");
+      // Ouvre directement le fichier sur ton serveur Hostinger
+      window.open(fileUrl, "_blank");
+      toast.success("Téléchargement du rapport en cours...");
     } catch (err) {
       console.error("Erreur lors de l'ouverture:", err);
-      toast.error("Erreur lors de l'ouverture du fichier.");
+      toast.error("Impossible d'ouvrir le fichier.");
     }
   }, [fileUrl]);
 
@@ -43,8 +46,9 @@ const FileDownloadButton = memo(({ fileUrl }) => {
   );
 });
 
-// ------------------ Upload Supabase ------------------
-const FileUploadButton = memo(({ rowId, rowData, onUpload }) => {
+
+// ------------------ BOUTON D'UPLOAD ------------------
+const FileUploadButton = memo(({ rowId, onUpload }) => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
@@ -57,110 +61,53 @@ const FileUploadButton = memo(({ rowId, rowData, onUpload }) => {
     }
   };
 
-  const handleSupabaseUpload = async () => {
+  const handleUpload = async () => {
     if (!file) {
       toast.error("Veuillez sélectionner un fichier");
       return;
     }
 
-    // ⛔ supprime l'ancien fichier si existe
-    if (rowData?.fichierUrl) {
-      try {
-        const oldUrl = rowData.fichierUrl;
-        const filePath = oldUrl.split("/").pop(); // récupère le nom du fichier
-        console.log("Suppression du fichier existant:", filePath);
-
-        const { error: deleteError } = await supabase.storage
-          .from("mionjo_files")
-          .remove([filePath]);
-
-        if (deleteError) {
-          console.error("Erreur suppression ancienne pièce:", deleteError);
-          toast.error("Impossible de supprimer l'ancien fichier");
-        } else {
-          console.log("Ancien fichier supprimé ✅");
-        }
-      } catch (err) {
-        console.error("Erreur lors de l'extraction/suppression:", err);
-      }
-    }
-
-    // Validation de la taille du fichier (100MB max)
-    if (file.size > 100 * 1024 * 1024) {
-      toast.error("Fichier trop volumineux (max 100MB)");
+    if (file.size > 200 * 1024 * 1024) { // max 200 Mo
+      toast.error("Fichier trop volumineux (max 200MB)");
       return;
     }
 
     try {
       setLoading(true);
-      toast.loading("Upload en cours...", { id: 'upload' });
+      toast.loading("Upload en cours...", { id: "upload" });
 
-      // Générer un nom de fichier unique
-      const fileExtension = file.name.split('.').pop();
-      const fileName = `rapport_${rowId}_${Date.now()}.${fileExtension}`;
-      
-      console.log('Upload vers Supabase:', fileName);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("rowId", rowId);
 
-      // Upload vers Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('mionjo_files')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false // Ne pas écraser les fichiers existants
-        });
+      const response = await axios.post(
+        "https://skyblue-gaur-819446.hostingersite.com/file.php",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
 
-      if (uploadError) {
-        console.error('Erreur Supabase upload:', uploadError);
-        throw new Error(`Erreur upload: ${uploadError.message}`);
-      }
-
-      console.log('Upload réussi:', uploadData);
-
-      // Récupérer l'URL publique
-      const { data: { publicUrl } } = supabase.storage
-        .from('mionjo_files')
-        .getPublicUrl(fileName);
-
-      console.log('URL publique:', publicUrl);
-
-      if (!publicUrl) {
-        throw new Error("Impossible de générer l'URL publique");
-      }
-
-      // Mettre à jour la base de données via l'API
-      try {
-        const formData = new FormData();
-        formData.append('lien_fichier', publicUrl); // ⚠️ Le nom DOIT correspondre exactement
-        formData.append('fichier_nom', file.name);  // ⚠️ Ajout du nom du fichier
-        const response = await axios.post(
+      if (response.data.success) {
+        try {
+          const formData = new FormData();
+          formData.append('lien_fichier', response.data.url); //Le nom DOIT correspondre exactement
+          const response = await axios.post(
           `${API_BASE_URL}/fichier/${rowId}/upload`,
          formData
         );
-        console.log(response.data);
-
-        if (response.status === 200) {
-          toast.success("Fichier importé avec succès", { id: 'upload' });
+          toast.success("Fichier uploadé avec succès", { id: "upload" });
           if (onUpload) onUpload();
           setOpenDialog(false);
           setFile(null);
+        } catch (error) {
+          throw new Error("Échec de l'enregistrement dans la base de données");
         }
-      } catch (error) {
-        throw new Error("Échec de l'enregistrement dans la base de données");
-      } 
-    } catch (err) {
-      console.error("Erreur complète:", err);
-      
-      // Messages d'erreur plus spécifiques
-      let errorMessage = "Erreur lors de l'upload";
-      if (err.message.includes('storage')) {
-        errorMessage = "Erreur de stockage. Vérifiez la configuration Supabase.";
-      } else if (err.message.includes('network') || err.message.includes('fetch')) {
-        errorMessage = "Erreur de connexion. Vérifiez votre internet.";
+        
       } else {
-        errorMessage = err.message;
+        throw new Error(response.data.error || "Erreur inconnue");
       }
-      
-      toast.error(`Erreur: ${errorMessage}`, { id: 'upload' });
+    } catch (err) {
+      console.error(err);
+      toast.error(`Erreur: ${err.message}`, { id: "upload" });
     } finally {
       setLoading(false);
     }
@@ -208,7 +155,7 @@ const FileUploadButton = memo(({ rowId, rowData, onUpload }) => {
             Annuler
           </Button>
           <Button
-            onClick={handleSupabaseUpload}
+            onClick={handleUpload}
             variant="contained"
             color="success"
             startIcon={loading ? null : <CloudUploadIcon />}
