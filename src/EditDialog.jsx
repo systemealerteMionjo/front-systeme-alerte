@@ -11,7 +11,7 @@ import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const API_BASE_URL = "https://fastapi-mionjoapi-alertemionjo1455-9k2qh0ff.leapcell.dev";
+const API_BASE_URL = "https://api.mionjo.mg";
 
 const INITIAL_FORM = {
   dateValue: dayjs(),

@@ -12,7 +12,7 @@ import axios from 'axios';
 import Tooltip from '@mui/material/Tooltip';
 import toast, { Toaster } from 'react-hot-toast';
 
-const API_BASE_URL = "https://fastapi-mionjoapi-alertemionjo1455-9k2qh0ff.leapcell.dev";
+const API_BASE_URL = "https://api.mionjo.mg";
 
 // Styles constants
 const STYLES = {
@@ -136,8 +136,8 @@ export default function AddActivityDialog({ refreshRows, row }) {
         params: formData
       });
       handleClose();
-      console.log("✅ Réponse du backend :", response.data);
-      toast.success("Activité ajoutée avec succès ✅");
+      console.log("Réponse du backend :", response.data);
+      toast.success("Activité ajoutée avec succès");
       
       if (refreshRows) {
         await refreshRows();
@@ -146,7 +146,7 @@ export default function AddActivityDialog({ refreshRows, row }) {
     } catch (error) {
       console.error("❌ Erreur lors de l'envoi:", error.response?.data || error);
       const errorMessage = error.response?.data?.message || error.message || "Erreur lors de l'ajout";
-      toast.error(`❌ ${errorMessage}`);
+      toast.error(`${errorMessage}`);
     } finally {
       setLoading(false);
     }

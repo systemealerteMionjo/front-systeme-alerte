@@ -10,7 +10,7 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
 // Constants
-const API_BASE_URL = "https://fastapi-mionjoapi-alertemionjo1455-9k2qh0ff.leapcell.dev";
+const API_BASE_URL = "https://api.mionjo.mg";
 const SESSION_KEY = "sessionActive";
 
 // Styles

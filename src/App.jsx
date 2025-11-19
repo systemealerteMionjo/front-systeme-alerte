@@ -16,7 +16,7 @@ import toast, { Toaster } from 'react-hot-toast';
 // ------------------ Components Memo ------------------
 const StatusChip = memo(({ label, color }) => <Chip label={label} color={color} size="small" />);
 
-const API_BASE_URL = "https://fastapi-mionjoapi-alertemionjo1455-9k2qh0ff.leapcell.dev";
+const API_BASE_URL = "https://api.mionjo.mg";
 
 const FileDownloadButton = memo(({ fileUrl }) => {
   const handleDownload = useCallback(() => {
@@ -88,17 +88,19 @@ const FileUploadButton = memo(({ rowId, onUpload }) => {
 
       if (response.data.success) {
         try {
-          const formData = new FormData();
-          formData.append('lien_fichier', response.data.url); //Le nom DOIT correspondre exactement
-          const response = await axios.post(
+          const formData2 = new FormData();
+          formData2.append('lien_fichier', response.data.url);
+          console.log("URL du fichier reçu:", response.data.url);
+          await axios.post(
           `${API_BASE_URL}/fichier/${rowId}/upload`,
-         formData
+         formData2
         );
           toast.success("Fichier uploadé avec succès", { id: "upload" });
           if (onUpload) onUpload();
           setOpenDialog(false);
           setFile(null);
         } catch (error) {
+          console.error("Erreur lors de l'enregistrement en base:", error);
           throw new Error("Échec de l'enregistrement dans la base de données");
         }
         
@@ -348,7 +350,7 @@ function App() {
       field: 'upload', 
       headerName: '', 
       flex: 0.5, 
-      renderCell: (params) => <FileUploadButton rowId={params.row.id} rowData={params.row} onUpload={fetchData} /> 
+      renderCell: (params) => <FileUploadButton rowId={params.row.id} onUpload={fetchData} /> 
     }
   ], [fetchData]);
 
